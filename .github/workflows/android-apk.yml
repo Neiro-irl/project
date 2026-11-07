@@ -34,7 +34,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install Android 17 SDK
         run: sdkmanager --install 'platforms;android-37.0' 'build-tools;37.0.0'
@@ -73,7 +73,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install Android 17 SDK
         run: sdkmanager --install 'platforms;android-37.0' 'build-tools;37.0.0'
