@@ -5,34 +5,53 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-val AftertoneBackground = Color(0xFF050505)
-val AftertoneSurface = Color(0xFF111111)
-val AftertoneSurfaceHigh = Color(0xFF1D1D1F)
-val AftertoneDock = Color(0xFF1A1A1C)
-val AftertoneAccent = Color(0xFFD6F278)
-val AftertoneText = Color(0xFFF7F7F2)
-val AftertoneMuted = Color(0xFFA3A3A3)
-val AftertoneOutline = Color(0xFF303033)
+val AftertoneBackground: Color
+    @Composable get() = MaterialTheme.colorScheme.background
 
-private val AftertoneColorScheme = darkColorScheme(
-    primary = AftertoneAccent,
-    onPrimary = Color(0xFF17200A),
-    secondary = Color(0xFFB8C3A6),
-    onSecondary = Color(0xFF182014),
-    background = AftertoneBackground,
-    onBackground = AftertoneText,
-    surface = AftertoneSurface,
-    onSurface = AftertoneText,
-    surfaceVariant = AftertoneSurfaceHigh,
-    onSurfaceVariant = AftertoneMuted,
-    outline = AftertoneOutline,
+val AftertoneSurface: Color
+    @Composable get() = MaterialTheme.colorScheme.surface
+
+val AftertoneSurfaceHigh: Color
+    @Composable get() = MaterialTheme.colorScheme.surfaceVariant
+
+val AftertoneDock: Color
+    @Composable get() = MaterialTheme.colorScheme.surfaceContainer
+
+val AftertoneAccent: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
+
+val AftertoneText: Color
+    @Composable get() = MaterialTheme.colorScheme.onBackground
+
+val AftertoneMuted: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+
+val AftertoneOutline: Color
+    @Composable get() = MaterialTheme.colorScheme.outline
+
+private fun AftertonePalette.toColorScheme() = darkColorScheme(
+    primary = Color(accentArgb.toInt()),
+    onPrimary = Color(onAccentArgb.toInt()),
+    secondary = Color(secondaryArgb.toInt()),
+    onSecondary = Color(onSecondaryArgb.toInt()),
+    background = Color(backgroundArgb.toInt()),
+    onBackground = Color(textArgb.toInt()),
+    surface = Color(surfaceArgb.toInt()),
+    onSurface = Color(textArgb.toInt()),
+    surfaceVariant = Color(surfaceHighArgb.toInt()),
+    onSurfaceVariant = Color(mutedArgb.toInt()),
+    surfaceContainer = Color(dockArgb.toInt()),
+    outline = Color(outlineArgb.toInt()),
     error = Color(0xFFFFB4AB),
 )
 
 @Composable
-fun AftertoneTheme(content: @Composable () -> Unit) {
+internal fun AftertoneTheme(
+    palette: AftertonePalette = AftertonePalette.default,
+    content: @Composable () -> Unit,
+) {
     MaterialTheme(
-        colorScheme = AftertoneColorScheme,
+        colorScheme = palette.toColorScheme(),
         content = content,
     )
 }

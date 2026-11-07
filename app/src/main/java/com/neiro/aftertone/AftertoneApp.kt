@@ -61,9 +61,11 @@ import com.neiro.aftertone.ui.screens.HomeScreen
 import com.neiro.aftertone.ui.screens.LibraryScreen
 import com.neiro.aftertone.ui.screens.NowPlayingScreen
 import com.neiro.aftertone.ui.screens.SearchScreen
+import com.neiro.aftertone.ui.screens.SettingsScreen
 import com.neiro.aftertone.ui.theme.AftertoneBackground
 import com.neiro.aftertone.ui.theme.AftertoneMuted
 import com.neiro.aftertone.ui.theme.AftertoneSurfaceHigh
+import com.neiro.aftertone.ui.theme.AftertonePalette
 import com.neiro.aftertone.ui.theme.AftertoneText
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -76,6 +78,7 @@ internal enum class AppTab(val label: String) {
     SEARCH("Поиск"),
     LIBRARY("Библиотека"),
     COLLECTIONS("Подборки"),
+    SETTINGS("Настройки"),
 }
 
 private enum class Page { TAB, COLLECTION, NOW_PLAYING }
@@ -83,7 +86,10 @@ private data class Destination(val page: Page, val tab: AppTab, val collectionId
 private const val FAVORITES_COLLECTION_ID = "__aftertone_favorites__"
 
 @Composable
-internal fun AftertoneApp() {
+internal fun AftertoneApp(
+    selectedPalette: AftertonePalette,
+    onPaletteSelected: (AftertonePalette) -> Unit,
+) {
     val context = LocalContext.current
     val repository = remember(context) { LocalLibraryRepository(context) }
     val scope = rememberCoroutineScope()
@@ -325,6 +331,10 @@ internal fun AftertoneApp() {
                                 onOpenPlaylist = { playlist -> openCollectionId = playlist.id },
                                 onCreatePlaylist = { trackToAddToPlaylist = null; showCreatePlaylist = true },
                                 onRequestDeletePlaylist = { playlistToDelete = it },
+                            )
+                            AppTab.SETTINGS -> SettingsScreen(
+                                selectedPalette = selectedPalette,
+                                onPaletteSelected = onPaletteSelected,
                             )
                         }
                     }

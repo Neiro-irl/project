@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -83,6 +84,7 @@ internal fun AftertoneBottomBar(
                         AppTab.SEARCH -> Icons.Filled.Search
                         AppTab.LIBRARY -> Icons.Filled.LibraryMusic
                         AppTab.COLLECTIONS -> Icons.AutoMirrored.Filled.QueueMusic
+                        AppTab.SETTINGS -> Icons.Filled.Settings
                     }
                     NavigationBarItem(
                         selected = selectedTab == tab && !collectionOpen,
