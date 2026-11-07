@@ -1,0 +1,164 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Unit tests, lint and debug build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 17 SDK
+        run: sdkmanager --install 'platforms;android-37.0' 'build-tools;37.0.0'
+
+      - name: Test, lint and build debug APK
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+
+      - name: Save debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aftertone-debug-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: Publish installable APK
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 17 SDK
+        run: sdkmanager --install 'platforms;android-37.0' 'build-tools;37.0.0'
+
+      - name: Configure optional persistent signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo 'AFTERTONE_SIGNING_MODE=runner-debug-key' >> "$GITHUB_ENV"
+            {
+              echo '### APK signing'
+              echo 'No persistent signing secrets are configured; using this runner temporary Android debug key.'
+              echo 'Future builds may require uninstalling the previous APK before installing the new one.'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          for name in ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing repository secret: $name"
+              exit 1
+            fi
+          done
+
+          keystore="$RUNNER_TEMP/aftertone-release.keystore"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          chmod 600 "$keystore"
+          {
+            printf 'ANDROID_KEYSTORE_PATH=%s\n' "$keystore"
+            printf 'ANDROID_KEYSTORE_PASSWORD=%s\n' "$ANDROID_KEYSTORE_PASSWORD"
+            printf 'ANDROID_KEY_ALIAS=%s\n' "$ANDROID_KEY_ALIAS"
+            printf 'ANDROID_KEY_PASSWORD=%s\n' "$ANDROID_KEY_PASSWORD"
+            echo 'AFTERTONE_SIGNING_MODE=repository-release-key'
+          } >> "$GITHUB_ENV"
+          {
+            echo '### APK signing'
+            echo 'Using the repository-configured persistent release key.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build release APK
+        run: ./gradlew --no-daemon :app:assembleRelease -PversionCode="$GITHUB_RUN_NUMBER" -PversionName="1.0.$GITHUB_RUN_NUMBER"
+
+      - name: Prepare APK and checksum
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk Aftertone.apk
+          sha256sum Aftertone.apk | tee Aftertone.apk.sha256
+
+      - name: Save release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aftertone-release-${{ github.run_number }}
+          path: |
+            Aftertone.apk
+            Aftertone.apk.sha256
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: v1.0.${{ github.run_number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          signing_mode="${AFTERTONE_SIGNING_MODE:-runner-debug-key}"
+          if [ "$signing_mode" = 'runner-debug-key' ]; then
+            notes='Installable Aftertone APK for Android 8.0+. Signed with a temporary GitHub runner debug key; if Android refuses an in-place update, uninstall the previous build first.'
+          else
+            notes='Installable Aftertone APK for Android 8.0+, signed with the repository-configured persistent release key.'
+          fi
+
+          if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --title "$TAG_NAME" --notes "$notes"
+            gh release upload "$TAG_NAME" Aftertone.apk Aftertone.apk.sha256 --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG_NAME" Aftertone.apk Aftertone.apk.sha256 \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "$TAG_NAME" \
+              --notes "$notes" \
+              --latest
+          fi
