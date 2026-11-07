@@ -24,11 +24,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private val artworkPalettes = listOf(
-    listOf(Color(0xFF24382F), Color(0xFF718563)),
-    listOf(Color(0xFF243443), Color(0xFF6D8790)),
-    listOf(Color(0xFF46352D), Color(0xFFB47C58)),
-    listOf(Color(0xFF372B45), Color(0xFF8971A3)),
-    listOf(Color(0xFF3A4030), Color(0xFFA6A46A)),
+    listOf(Color(0xFF1A3A32), Color(0xFF548C70)),
+    listOf(Color(0xFF263450), Color(0xFF6779AA)),
+    listOf(Color(0xFF503326), Color(0xFFAD7041)),
+    listOf(Color(0xFF3D2D49), Color(0xFF8C6AA4)),
+    listOf(Color(0xFF3A3E21), Color(0xFF94984C)),
 )
 
 @Composable
@@ -61,7 +61,7 @@ fun TrackArtwork(
         } else {
             Text(
                 text = track?.displayTitle?.firstOrNull()?.uppercaseChar()?.toString() ?: "A",
-                color = Color.White.copy(alpha = 0.88f),
+                color = Color.White.copy(alpha = 0.9f),
                 fontSize = 42.sp,
                 fontWeight = FontWeight.Light,
             )

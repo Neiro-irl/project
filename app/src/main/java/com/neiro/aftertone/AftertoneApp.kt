@@ -60,6 +60,7 @@ import com.neiro.aftertone.ui.screens.CollectionsScreen
 import com.neiro.aftertone.ui.screens.HomeScreen
 import com.neiro.aftertone.ui.screens.LibraryScreen
 import com.neiro.aftertone.ui.screens.NowPlayingScreen
+import com.neiro.aftertone.ui.screens.SearchScreen
 import com.neiro.aftertone.ui.theme.AftertoneBackground
 import com.neiro.aftertone.ui.theme.AftertoneMuted
 import com.neiro.aftertone.ui.theme.AftertoneSurfaceHigh
@@ -72,7 +73,8 @@ import kotlinx.coroutines.withContext
 
 internal enum class AppTab(val label: String) {
     HOME("Главная"),
-    LIBRARY("Медиатека"),
+    SEARCH("Поиск"),
+    LIBRARY("Библиотека"),
     COLLECTIONS("Подборки"),
 }
 
@@ -300,6 +302,15 @@ internal fun AftertoneApp() {
                                 onRemoveFromDevice = ::requestRemove,
                             )
                             AppTab.LIBRARY -> LibraryScreen(
+                                library = library,
+                                isImporting = isImporting,
+                                onImport = ::launchImport,
+                                onPlayTracks = ::playTracks,
+                                onToggleFavorite = ::toggleFavorite,
+                                onAddToCollection = ::addToCollection,
+                                onRemoveFromDevice = ::requestRemove,
+                            )
+                            AppTab.SEARCH -> SearchScreen(
                                 library = library,
                                 isImporting = isImporting,
                                 onImport = ::launchImport,

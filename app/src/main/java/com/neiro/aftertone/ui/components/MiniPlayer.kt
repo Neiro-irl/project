@@ -1,10 +1,12 @@
 package com.neiro.aftertone.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,17 +14,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,6 +45,8 @@ import com.neiro.aftertone.ui.theme.AftertoneMuted
 import com.neiro.aftertone.ui.theme.AftertoneOutline
 import com.neiro.aftertone.ui.theme.AftertoneSurfaceHigh
 
+internal fun miniPlayerTitle(track: Track?): String = track?.displayTitle ?: "Пока ничего не играет"
+
 @Composable
 fun MiniPlayer(
     track: Track?,
@@ -50,14 +57,43 @@ fun MiniPlayer(
     onPlayPause: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AnimatedVisibility(
-        visible = track != null,
-        enter = fadeIn() + slideInVertically { it / 3 },
-        exit = fadeOut() + slideOutVertically { it / 3 },
-        modifier = modifier,
-    ) {
-        if (track != null) {
-            val progress = if (durationMs > 0) (currentPositionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
+    AnimatedContent(
+        targetState = track,
+        transitionSpec = {
+            (fadeIn(tween(180)) + slideInVertically { it / 10 }) togetherWith
+                (fadeOut(tween(120)) + slideOutVertically { -it / 10 })
+        },
+        modifier = modifier.fillMaxWidth(),
+        label = "mini-player-content",
+    ) { visibleTrack ->
+        if (visibleTrack == null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(shape = RoundedCornerShape(12.dp), color = AftertoneSurfaceHigh) {
+                    Icon(
+                        Icons.Filled.MusicNote,
+                        contentDescription = null,
+                        tint = AftertoneMuted,
+                        modifier = Modifier.padding(9.dp).size(20.dp),
+                    )
+                }
+                Column(
+                    modifier = Modifier.weight(1f).padding(start = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(miniPlayerTitle(null), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    Text("Добавь аудио, чтобы начать", color = AftertoneMuted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        } else {
+            val effectiveDuration = durationMs.takeIf { it > 0 } ?: visibleTrack.durationMs
+            val progress = if (effectiveDuration > 0) {
+                (currentPositionMs.toFloat() / effectiveDuration).coerceIn(0f, 1f)
+            } else {
+                0f
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -67,11 +103,11 @@ fun MiniPlayer(
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TrackArtwork(track, Modifier.size(42.dp), cornerRadius = 12)
+                    TrackArtwork(visibleTrack, Modifier.size(42.dp), cornerRadius = 12)
                     Spacer(Modifier.width(11.dp))
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(track.displayTitle, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(track.displayArtist, color = AftertoneMuted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(miniPlayerTitle(visibleTrack), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(visibleTrack.displayArtist, color = AftertoneMuted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     IconButton(
                         onClick = onPlayPause,
