@@ -114,7 +114,7 @@ jobs:
             {
               echo '### APK signing'
               echo 'No persistent signing secrets are configured; using this runner temporary Android debug key.'
-              echo 'Future builds may require uninstalling the previous APK before installing the new one.'
+              echo 'The signing certificate may change between builds or key changes, so in-place updates are not guaranteed. Uninstalling deletes app-private music and playlists; export and verify a ZIP backup before uninstalling.'
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -138,7 +138,7 @@ jobs:
           } >> "$GITHUB_ENV"
           {
             echo '### APK signing'
-            echo 'Using the repository-configured persistent release key.'
+            echo 'Using the repository-configured persistent release key. Its certificate may differ from earlier APKs or change on later key rotation, so in-place updates are not guaranteed; export and verify a ZIP backup before uninstalling.'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build release APK
@@ -168,19 +168,19 @@ jobs:
           set -euo pipefail
           signing_mode="${AFTERTONE_SIGNING_MODE:-runner-debug-key}"
           if [ "$signing_mode" = 'runner-debug-key' ]; then
-            notes='Installable Aftertone APK for Android 8.0+. Signed with a temporary GitHub runner debug key; if Android refuses an in-place update, uninstall the previous build first.'
+            notes='Installable Aftertone APK for Android 8.0+. Signed with a temporary GitHub runner debug key; its certificate can change between builds or key changes, so in-place updates are not guaranteed. Uninstalling deletes app-private music and playlists. Export and verify a ZIP backup before uninstalling. Older releases remain available.'
           else
-            notes='Installable Aftertone APK for Android 8.0+, signed with the repository-configured persistent release key.'
+            notes='Installable Aftertone APK for Android 8.0+, signed with the repository-configured persistent release key. Its certificate may differ from earlier APKs or change on later key rotation, so in-place updates are not guaranteed. Uninstalling deletes app-private music and playlists. Export and verify a ZIP backup before uninstalling. Older releases remain available.'
           fi
 
           if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release edit "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --title "$TAG_NAME" --notes "$notes"
-            gh release upload "$TAG_NAME" Aftertone.apk Aftertone.apk.sha256 --repo "$GITHUB_REPOSITORY" --clobber
-          else
-            gh release create "$TAG_NAME" Aftertone.apk Aftertone.apk.sha256 \
-              --repo "$GITHUB_REPOSITORY" \
-              --target "$GITHUB_SHA" \
-              --title "$TAG_NAME" \
-              --notes "$notes" \
-              --latest
+            echo "::error::Release $TAG_NAME already exists; refusing to overwrite a published APK version."
+            exit 1
           fi
+
+          gh release create "$TAG_NAME" Aftertone.apk Aftertone.apk.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG_NAME" \
+            --notes "$notes" \
+            --latest

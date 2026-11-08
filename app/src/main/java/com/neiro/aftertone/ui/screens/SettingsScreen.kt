@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.neiro.aftertone.storage.BackupSummary
 import com.neiro.aftertone.ui.theme.AftertoneAccent
 import com.neiro.aftertone.ui.theme.AftertoneMuted
 import com.neiro.aftertone.ui.theme.AftertoneOutline
@@ -44,6 +45,20 @@ internal fun SettingsScreen(
     onPaletteSelected: (AftertonePalette) -> Unit,
     installedVersion: String,
     onCheckForUpdates: () -> Unit,
+    isBackupBusy: Boolean,
+    isBackupCancelable: Boolean,
+    backupProgressText: String?,
+    backupStatusMessage: String?,
+    restoreSummary: BackupSummary?,
+    onCreateBackup: () -> Unit,
+    onSelectRestore: () -> Unit,
+    onCancelBackup: () -> Unit,
+    onConfirmRestore: () -> Unit,
+    onDismissRestore: () -> Unit,
+    isRestoreCleanupPending: Boolean = false,
+    onRetryRestoreCleanup: () -> Unit = {},
+    isTemporaryArchiveCleanupPending: Boolean = false,
+    onRetryTemporaryArchiveCleanup: () -> Unit = {},
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().selectableGroup(),
@@ -84,6 +99,24 @@ internal fun SettingsScreen(
                 color = AftertoneMuted,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        item {
+            BackupSettingsSection(
+                isBusy = isBackupBusy,
+                isCancellationAllowed = isBackupCancelable,
+                progressText = backupProgressText,
+                statusMessage = backupStatusMessage,
+                restoreSummary = restoreSummary,
+                onCreateBackup = onCreateBackup,
+                onSelectRestore = onSelectRestore,
+                onCancelOperation = onCancelBackup,
+                onConfirmRestore = onConfirmRestore,
+                onDismissRestore = onDismissRestore,
+                isRestoreCleanupPending = isRestoreCleanupPending,
+                onRetryRestoreCleanup = onRetryRestoreCleanup,
+                isTemporaryArchiveCleanupPending = isTemporaryArchiveCleanupPending,
+                onRetryTemporaryArchiveCleanup = onRetryTemporaryArchiveCleanup,
             )
         }
         item {
