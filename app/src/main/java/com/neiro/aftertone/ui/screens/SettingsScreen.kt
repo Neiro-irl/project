@@ -42,6 +42,8 @@ import com.neiro.aftertone.ui.theme.AftertoneText
 internal fun SettingsScreen(
     selectedPalette: AftertonePalette,
     onPaletteSelected: (AftertonePalette) -> Unit,
+    installedVersion: String,
+    onCheckForUpdates: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().selectableGroup(),
@@ -82,6 +84,19 @@ internal fun SettingsScreen(
                 color = AftertoneMuted,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        item {
+            Text(
+                text = "ОБНОВЛЕНИЯ",
+                color = AftertoneMuted,
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
+        item {
+            UpdateCheckCard(
+                installedVersion = installedVersion,
+                onCheckForUpdates = onCheckForUpdates,
             )
         }
     }

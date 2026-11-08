@@ -1,5 +1,7 @@
 package com.neiro.aftertone
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -62,6 +64,7 @@ import com.neiro.aftertone.ui.screens.LibraryScreen
 import com.neiro.aftertone.ui.screens.NowPlayingScreen
 import com.neiro.aftertone.ui.screens.SearchScreen
 import com.neiro.aftertone.ui.screens.SettingsScreen
+import com.neiro.aftertone.updates.UpdateCheckInfo
 import com.neiro.aftertone.ui.theme.AftertoneBackground
 import com.neiro.aftertone.ui.theme.AftertoneMuted
 import com.neiro.aftertone.ui.theme.AftertoneSurfaceHigh
@@ -144,6 +147,15 @@ internal fun AftertoneApp(
 
     fun launchImport() {
         if (!isImporting && !libraryLoadError) importLauncher.launch(arrayOf("audio/*"))
+    }
+
+    fun openReleasePage() {
+        val intent = Intent(Intent.ACTION_VIEW, UpdateCheckInfo.releasePageUrl.toUri())
+        try {
+            context.startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            scope.launch { snackbarHostState.showSnackbar("Не удалось открыть GitHub Releases.") }
+        }
     }
 
     fun playTracks(tracks: List<Track>, selectedTrackId: String) {
@@ -335,6 +347,8 @@ internal fun AftertoneApp(
                             AppTab.SETTINGS -> SettingsScreen(
                                 selectedPalette = selectedPalette,
                                 onPaletteSelected = onPaletteSelected,
+                                installedVersion = BuildConfig.VERSION_NAME,
+                                onCheckForUpdates = ::openReleasePage,
                             )
                         }
                     }
